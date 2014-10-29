@@ -1,0 +1,17 @@
+name:              hplatec
+version:           1.0
+Build-Type:        Simple
+cabal-version:     >= 1.2
+
+executable hplatec
+  main-is:         Main.hs
+  hs-source-dirs:  src
+  build-depends:   base,
+                   JuicyPixels == 3.1.*,
+                   containers == 0.5.*,
+                   either-unwrap
+  extra-lib-dirs: .
+  --c-sources: plate-tectonics/src
+  --cpp-options:
+  ld-options: plate-tectonics.a
+  extra-libraries: stdc++
