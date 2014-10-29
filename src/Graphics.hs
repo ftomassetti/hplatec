@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE RankNTypes #-}
 
-module Graphics(Map (MakeMap), generateMap) where
+module Graphics(Map (MakeMap), generatePngMap, generateGifMap) where
 
 import Codec.Picture
 import Data.Word
@@ -13,11 +14,20 @@ data Map = MakeMap { mapWidth :: Int, mapHeight :: Int, mapCells :: M.Map (Int,I
 getElevation :: Map -> Int -> Int -> CFloat
 getElevation map x y = fromJust $ M.lookup (x,y) (mapCells map)
 
-altitudeColor :: CFloat -> PixelRGB8
-altitudeColor elev = let f = elev
-                         isSea = elev < 0.5
-                         comp = round( f*255.0 )
-                     in if isSea then PixelRGB8 0 0 comp else PixelRGB8 0 comp 0
+-- np = no palette
+-- p  = palette
+
+npAltitudeColor :: CFloat -> PixelRGB8
+npAltitudeColor elev = let f = elev
+                           isSea = elev < 0.5
+                           comp = round( f*255.0 )
+                       in if isSea then PixelRGB8 0 0 comp else PixelRGB8 0 comp 0
+
+pAltitudeColor :: CFloat -> Pixel8
+pAltitudeColor elev = let f = elev
+                          isSea = elev < 0.5
+                          comp = round( (f/5.0)*127.0 )
+                       in if isSea then min comp 127 else comp+127
 
 mix :: Word8 -> Word8 -> CFloat -> CFloat -> Word8
 mix c1 c2 f1 f2 = let comp1 =  (fromIntegral c1) * f1
@@ -33,9 +43,13 @@ mixColors c1 c2 f = let PixelRGB8 r1 g1 b1 = c1
                         b = mix b1 b2 f fi
                     in PixelRGB8 r g b
 
-generateMap :: Map -> Image PixelRGB8
-generateMap map = generateImage f w h
-                    where w = mapWidth map
-                          h = mapHeight map
-                          f x y = altColor
-                                  where altColor = altitudeColor $ getElevation map x y
+generateMap :: forall p . Pixel p => Map -> (CFloat -> p) -> Image p
+generateMap map pixelFun = generateImage f w h
+                           where w = mapWidth map
+                                 h = mapHeight map
+                                 f x y = altColor
+                                         where altColor = pixelFun $ getElevation map x y
+
+generatePngMap map = generateMap map npAltitudeColor
+
+generateGifMap map = generateMap map pAltitudeColor
