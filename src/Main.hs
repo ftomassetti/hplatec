@@ -95,6 +95,6 @@ main = do
     p <- c_platec_create 512 0.65 60 0.02 1000000 0.33 2 10
     frames <- getFrames p
     putStrLn "Frames produced, saving animation (it could take a while)"
-    let res = writeAnimation "animation3.gif" frames
+    let res = writeAnimation "animation4.gif" frames
     processRes res
     return ()
